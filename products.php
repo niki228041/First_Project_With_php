@@ -47,6 +47,8 @@
                     $pieces = explode("|", $image);
                     //print_r($pieces);
 
+                    echo "<script>console.log('$id')</script>";
+
                     $name = $row["name"];
                     $price = $row["price"];
                     $id = $row["id"];
@@ -62,6 +64,7 @@
                             </div>
                                 <div style="display:0 flex; flex-direction: row;height:80%;">
                                     <a type="button" class="btn btn-success" href="profile.php?id='.$id.'">Купити</a>
+                                    <a type="button" class="btn btn-success" href="edit.php?id='.$id.'">Редагувати</a>
                                     <button type="button" class="btn btn-danger delete ml-2" data-id='.$id.'>Видалити</button>
                                 </div>
                             

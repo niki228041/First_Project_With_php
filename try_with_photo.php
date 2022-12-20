@@ -1,13 +1,35 @@
 <?php
 
 if(isset($_POST['submit'])){
-    $_countOfPics = count($_FILES['userfile']['name']);
+
 
     $array_of_image = [];
 
+    $array_of_files = [];
+
+    for($i =0;$i<3;$i++)
+    {
+        $tmp_name = 'file_' . ($i+1);
+
+        $tmp = !empty($_FILES[$tmp_name]['name']);
+
+        echo '<script> console.log('.$tmp.')</script>';
+
+        if(!empty($_FILES[$tmp_name]['name']))
+        {
+            array_push($array_of_files,$_FILES[$tmp_name]);
+        }
+    }
+
+
+
+
+    $_countOfPics = count($array_of_files);
+
+
     for ($i=0; $i < $_countOfPics; $i++) {
         //$array_of_image_string .= saveImg($i) . "|";
-        array_push($array_of_image,saveImg($i));
+        array_push($array_of_image,saveImg($i,$array_of_files));
         //saveImg($i);
     }
 
@@ -29,31 +51,32 @@ if(isset($_POST['submit'])){
         //$smtp->bindParam(':image',$images);
         $smtp->execute();
 
+        $id = $dbh->lastInsertId();
+
+        echo '<script> console.log("myid")</script>';
+        echo '<script> console.log('.$id.')</script>';
+
 
         //Select id from products
-        $ids_request = "SELECT id,name FROM `tbh_products` WHERE name = :name;";
-        $sth=$dbh->prepare($ids_request);
-        $sth->bindParam(':name',$name);
-
-        $sth->execute();
-
-        $id = $sth->fetchAll();
-        echo '<script> console.log('.$id[0]['id'].')</script>';
 
         //-----------
 
         //Insert images in images_table
         print_r($array_of_image);
 
+
         $counter = 0;
         foreach ($array_of_image as $img)
         {
-            $sql_img = "INSERT INTO `tbh_product_images` (`name`, `datecreate`, `priority`, `product_id`) VALUES (:img,NOW(), :counter, :product_id);";
-            $db_prepare_img_to_push = $dbh->prepare($sql_img);
-            $db_prepare_img_to_push->bindParam(':img',$img);
-            $db_prepare_img_to_push->bindParam(':counter',$counter);
-            $db_prepare_img_to_push->bindParam(':product_id',$id[0]['id']);
-            $db_prepare_img_to_push->execute();
+            $priority_ = $counter+1;
+            if($counter<3) {
+                $sql_img = "INSERT INTO `tbh_product_images` (`name`, `datecreate`, `priority`, `product_id`) VALUES (:img,NOW(), :counter, :product_id);";
+                $db_prepare_img_to_push = $dbh->prepare($sql_img);
+                $db_prepare_img_to_push->bindParam(':img', $img);
+                $db_prepare_img_to_push->bindParam(':counter',$priority_);
+                $db_prepare_img_to_push->bindParam(':product_id', $id);
+                $db_prepare_img_to_push->execute();
+            }
             $counter++;
         }
         //-----------
@@ -61,7 +84,7 @@ if(isset($_POST['submit'])){
 
 
 
-        //header('Location: products.php');
+        header('Location: products.php');
         //ot tak toche mochna
         //header('Location:/');
 
@@ -73,24 +96,21 @@ if(isset($_POST['submit'])){
         echo '<script> console.log("error with some form field")</script>';
     }
 
-
-
-
 }
 
 // print_r($_FILES['userfile']['name'][2]);
 
-function saveImg($i)
+function saveImg($i,$array_of_files)
 {
     echo '<script>console.log("im in")</script>';
 
     $allowed_ext = array('png', 'jpg', 'jpeg', 'gif','webp','jfif');
-    if(!empty($_FILES['userfile']['name'][$i]))
+    if(!empty($array_of_files[$i]['name']))
     {
         // print_r($_FILES);
-        $file_name = $_FILES['userfile']['name'][$i];
-        $file_size = $_FILES['userfile']['size'][$i];
-        $file_tmp = $_FILES['userfile']['tmp_name'][$i];
+        $file_name = $array_of_files[$i]['name'];
+        $file_size = $array_of_files[$i]['size'];
+        $file_tmp = $array_of_files[$i]['tmp_name'];
         $target_dir = 'uploads/'.$file_name.'';
 
         $file_ext = explode('.',$file_name);
